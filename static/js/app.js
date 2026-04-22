@@ -97,6 +97,7 @@
   }
 
   var timerActive = false;
+  var shouldWarnOnUnload = true;
   function checkTimer() {
     fetch("/api/timer", { credentials: "same-origin" })
       .then(function (r) {
@@ -114,8 +115,22 @@
     setInterval(checkTimer, 60000);
   }
 
+  document.addEventListener("click", function (event) {
+    var anchor = event.target.closest("a");
+    if (!anchor) return;
+    if (anchor.target === "_blank") return;
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (anchor.origin === window.location.origin) {
+      shouldWarnOnUnload = false;
+    }
+  });
+
+  document.addEventListener("submit", function () {
+    shouldWarnOnUnload = false;
+  });
+
   window.addEventListener("beforeunload", function (e) {
-    if (timerActive) {
+    if (timerActive && shouldWarnOnUnload) {
       e.preventDefault();
       e.returnValue = "";
     }
