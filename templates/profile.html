@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Профиль{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="h1"><i class="fa-regular fa-user" aria-hidden="true"></i> Профиль</h1>
+  <p class="lede muted">Аккаунт и краткая статистика.</p>
+</div>
+
+<div class="profile-layout">
+  <section class="card profile-card">
+    <div class="profile-avatar" aria-hidden="true"><i class="fa-solid fa-circle-user"></i></div>
+    <div>
+      <p class="profile-email"><i class="fa-regular fa-envelope" aria-hidden="true"></i> {{ user.email }}</p>
+      <p class="muted small"><i class="fa-regular fa-clock" aria-hidden="true"></i> Создан: {{ format_date_user(user.created_at, user.date_format) }}</p>
+    </div>
+  </section>
+  <section class="grid-stats">
+    <article class="stat-card stat-card--flat">
+      <div class="stat-card__icon"><i class="fa-solid fa-folder-tree" aria-hidden="true"></i></div>
+      <div class="stat-card__body">
+        <p class="stat-card__label">Проектов</p>
+        <p class="stat-card__value">{{ n_projects }}</p>
+      </div>
+    </article>
+    <article class="stat-card stat-card--flat">
+      <div class="stat-card__icon"><i class="fa-solid fa-list-check" aria-hidden="true"></i></div>
+      <div class="stat-card__body">
+        <p class="stat-card__label">Задач</p>
+        <p class="stat-card__value">{{ n_tasks }}</p>
+      </div>
+    </article>
+  </section>
+  <p><a href="/settings" class="btn btn--ghost"><i class="fa-solid fa-gear" aria-hidden="true"></i> Настройки аккаунта</a></p>
+</div>
+{% endblock %}

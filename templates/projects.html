@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Проекты{% endblock %}
+{% block content %}
+<div class="page-head page-head--row">
+  <div>
+    <h1 class="h1"><i class="fa-solid fa-folder-tree" aria-hidden="true"></i> Проекты</h1>
+    <p class="lede muted">Заказы клиентов и тип оплаты.</p>
+  </div>
+  <a href="/projects?archived={% if show_archived %}0{% else %}1{% endif %}" class="btn btn--ghost">
+    {% if show_archived %}<i class="fa-solid fa-eye-slash" aria-hidden="true"></i> Скрыть архив{% else %}<i class="fa-solid fa-box-archive" aria-hidden="true"></i> Архив{% endif %}
+  </a>
+</div>
+
+<details class="card card--openable">
+  <summary class="card__summary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Новый проект</summary>
+  <form method="post" action="/projects/new" class="form-grid form-grid--2">
+    <label class="field"><span class="field__label"><i class="fa-solid fa-heading" aria-hidden="true"></i> Название</span><input class="input" name="name" required></label>
+    <label class="field"><span class="field__label"><i class="fa-solid fa-building" aria-hidden="true"></i> Клиент</span><input class="input" name="client_name"></label>
+    <label class="field field--full"><span class="field__label"><i class="fa-solid fa-align-left" aria-hidden="true"></i> Описание</span><textarea class="input input--area" name="description" rows="2"></textarea></label>
+    <label class="field"><span class="field__label"><i class="fa-solid fa-coins" aria-hidden="true"></i> Тип оплаты</span>
+      <select class="input" name="payment_type" id="pay-type">
+        <option value="{{ PaymentType.hourly.value }}">Почасовая</option>
+        <option value="{{ PaymentType.fixed.value }}">Фикс</option>
+      </select>
+    </label>
+    <label class="field"><span class="field__label"><i class="fa-solid fa-tag" aria-hidden="true"></i> Ставка / час</span><input class="input" name="hourly_rate" inputmode="decimal" placeholder="напр. 25"></label>
+    <label class="field"><span class="field__label"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i> Фикс. сумма</span><input class="input" name="fixed_amount" inputmode="decimal" placeholder="напр. 1200"></label>
+    <div class="field field--full actions-row">
+      <button type="submit" class="btn btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i> Создать</button>
+    </div>
+  </form>
+</details>
+
+<div class="table-wrap table-wrap--projects">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Проект</th>
+        <th>Клиент</th>
+        <th>Оплата</th>
+        <th>Статус</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in projects %}
+      <tr>
+        <td><strong>{{ p.name }}</strong><br><span class="muted small">{% set d = p.description or '' %}{{ d[:80] }}{% if d|length > 80 %}…{% endif %}</span></td>
+        <td>{{ p.client_name or '—' }}</td>
+        <td>
+          {% if p.payment_type == PaymentType.hourly.value %}
+          <i class="fa-regular fa-clock" aria-hidden="true"></i> {{ p.hourly_rate or '—' }} / ч
+          {% else %}
+          <i class="fa-solid fa-sack-dollar" aria-hidden="true"></i> {{ format_money(p.fixed_amount or 0, user.currency) }}
+          {% endif %}
+        </td>
+        <td><span class="pill pill--{{ p.status }}">{{ p.status }}</span></td>
+        <td class="table-actions">
+          {% if p.status == ProjectStatus.active.value %}
+          <button type="button" class="icon-btn" aria-haspopup="dialog" aria-controls="proj-dlg-{{ p.id }}" onclick="document.getElementById('proj-dlg-{{ p.id }}').showModal()"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></button>
+          <dialog id="proj-dlg-{{ p.id }}" class="action-dialog">
+            <div class="action-dialog__sheet">
+              <header class="action-dialog__head">
+                <span class="action-dialog__title">{{ p.name }}</span>
+                <button type="button" class="action-dialog__close" onclick="this.closest('dialog').close()" aria-label="Закрыть"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+              </header>
+              <div class="action-dialog__body">
+                <a href="/projects/{{ p.id }}/edit" class="action-dialog__item"><i class="fa-solid fa-pen" aria-hidden="true"></i> Изменить</a>
+                <form method="post" action="/projects/{{ p.id }}/complete" class="action-dialog__form">
+                  <button type="submit" class="action-dialog__item action-dialog__item--btn"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i> Завершить</button>
+                </form>
+                <form method="post" action="/projects/{{ p.id }}/archive" class="action-dialog__form">
+                  <button type="submit" class="action-dialog__item action-dialog__item--btn"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> В архив</button>
+                </form>
+                <form method="post" action="/projects/{{ p.id }}/delete" class="action-dialog__form" onsubmit="return confirm('Удалить проект?');">
+                  <button type="submit" class="action-dialog__item action-dialog__item--btn action-dialog__item--danger"><i class="fa-solid fa-trash" aria-hidden="true"></i> Удалить</button>
+                </form>
+              </div>
+            </div>
+          </dialog>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">Пока нет проектов.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

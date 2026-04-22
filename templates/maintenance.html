@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Технические работы{% endblock %}
+{% block auth_content %}
+<div class="card">
+  <h1 class="h1"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i> Технические работы</h1>
+  <p class="lede muted">Сайт временно недоступен. Мы скоро вернёмся. Если вы администратор — войдите через форму входа.</p>
+  <p class="maintenance-actions">
+    <a href="/login" class="btn btn--ghost"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Вход</a>
+    {% if maintenance_logged_in %}
+    <a href="/logout" class="btn btn--primary"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> Выйти</a>
+    {% endif %}
+  </p>
+  <p class="muted small" style="margin-top:1rem;">Чтобы сменить аккаунт, нажмите «Выйти» — откроется форма входа.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Учёт времени{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="h1"><i class="fa-solid fa-clock" aria-hidden="true"></i> Учёт времени</h1>
+  <p class="lede muted">Ручной ввод и список записей.</p>
+</div>
+
+<section class="card">
+  <h2 class="h2"><i class="fa-solid fa-plus" aria-hidden="true"></i> Добавить вручную</h2>
+  <form method="post" action="/time/manual" class="form-grid form-grid--2">
+    <label class="field"><span class="field__label"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Задача</span>
+      <select name="task_id" class="input" required>
+        {% for t in tasks %}
+        <option value="{{ t.id }}">{{ t.project.name }} — {{ t.title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="field"><span class="field__label"><i class="fa-regular fa-calendar" aria-hidden="true"></i> Дата</span>
+      <input type="date" name="work_date" class="input" required value="{{ today.isoformat() }}">
+    </label>
+    <label class="field"><span class="field__label"><i class="fa-regular fa-hourglass" aria-hidden="true"></i> Минуты</span>
+      <input type="number" name="duration_minutes" class="input" min="1" value="60" required>
+    </label>
+    <label class="field field--full"><span class="field__label"><i class="fa-solid fa-comment" aria-hidden="true"></i> Комментарий</span>
+      <input type="text" name="comment" class="input" placeholder="необязательно">
+    </label>
+    <div class="field field--full actions-row"><button type="submit" class="btn btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i> Сохранить</button></div>
+  </form>
+</section>
+
+<div class="table-wrap table-wrap--time">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Дата</th>
+        <th>Проект / задача</th>
+        <th>Длит.</th>
+        <th>Источник</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        <td>{{ format_date_user(e.work_date, user.date_format) }}</td>
+        <td><strong>{{ e.task.project.name }}</strong><br><span class="muted small">{{ e.task.title }}</span></td>
+        <td>{% if e.duration_seconds is not none %}{{ '%.2f'|format(e.duration_seconds / 60.0) }} мин{% else %}{{ e.duration_minutes }} мин{% endif %}</td>
+        <td>{% if e.source == TimeSource.timer.value %}<i class="fa-solid fa-stopwatch" aria-hidden="true"></i>{% else %}<i class="fa-solid fa-keyboard" aria-hidden="true"></i>{% endif %} {{ e.source }}</td>
+        <td class="table-actions">
+          <button type="button" class="icon-btn" aria-controls="time-dlg-{{ e.id }}" onclick="document.getElementById('time-dlg-{{ e.id }}').showModal()"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+          <dialog id="time-dlg-{{ e.id }}" class="action-dialog action-dialog--wide">
+            <div class="action-dialog__sheet">
+              <header class="action-dialog__head">
+                <span class="action-dialog__title">Запись времени</span>
+                <button type="button" class="action-dialog__close" onclick="this.closest('dialog').close()" aria-label="Закрыть"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+              </header>
+              <div class="action-dialog__body">
+                <form method="post" action="/time/{{ e.id }}/edit" class="form-grid form-grid--2 time-edit-form">
+                  <label class="field"><span class="field__label">Дата</span><input type="date" name="work_date" class="input" value="{{ e.work_date.isoformat() }}" required></label>
+                  <label class="field"><span class="field__label">Минуты</span><input type="number" name="duration_minutes" class="input" value="{{ e.duration_minutes }}" min="1" required></label>
+                  <label class="field field--full"><span class="field__label">Комментарий</span><input type="text" name="comment" class="input" value="{{ e.comment }}" placeholder="необязательно"></label>
+                  <div class="field field--full actions-row">
+                    <button type="submit" class="btn btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i> Сохранить</button>
+                  </div>
+                </form>
+                <form method="post" action="/time/{{ e.id }}/delete" class="action-dialog__form action-dialog__form--danger" onsubmit="return confirm('Удалить запись?');">
+                  <button type="submit" class="action-dialog__item action-dialog__item--btn action-dialog__item--danger"><i class="fa-solid fa-trash" aria-hidden="true"></i> Удалить запись</button>
+                </form>
+              </div>
+            </div>
+          </dialog>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">Записей пока нет.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

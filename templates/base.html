@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="{% if user is defined and user %}{{ user.theme }}{% else %}system{% endif %}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ title or 'Frilans' }}{% endblock %} · Frilans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Spectral:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="/static/css/app.css">
+  {% if user is defined and user %}
+  <meta name="user-currency" content="{{ user.currency }}">
+  <meta name="user-theme" content="{{ user.theme }}">
+  {% endif %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">К содержимому</a>
+  {% if user and not user.email_verified %}
+  <div class="auth-theme-bar">{% include "partials/theme_switch.html" %}</div>
+  <main id="main" class="auth-wrap">
+    <div id="page-root" class="page-shell page-shell--narrow">
+      {% for f in flash %}
+      <p class="flash flash--{{ f.cat }}">{{ f.msg }}</p>
+      {% endfor %}
+      {% block pending_content %}{% endblock %}
+      {% include "partials/site_footer.html" %}
+    </div>
+  </main>
+  {% elif user and user.email_verified %}
+  <div class="app-frame">
+    <header class="top-bar">
+      <a href="/" class="brand">
+        <span class="brand__mark" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span>
+        <span class="brand__text">Frilans</span>
+      </a>
+      <nav class="top-nav" aria-label="Основное меню">
+        <a href="/" class="top-nav__link {% if nav == 'home' %}is-active{% endif %}"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i><span>Главная</span></a>
+        <a href="/projects" class="top-nav__link {% if nav == 'projects' %}is-active{% endif %}"><i class="fa-solid fa-folder-tree" aria-hidden="true"></i><span>Проекты</span></a>
+        <a href="/tasks" class="top-nav__link {% if nav == 'tasks' %}is-active{% endif %}"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>Задачи</span></a>
+        <a href="/time" class="top-nav__link {% if nav == 'time' %}is-active{% endif %}"><i class="fa-solid fa-clock" aria-hidden="true"></i><span>Время</span></a>
+        <a href="/reports" class="top-nav__link {% if nav == 'reports' %}is-active{% endif %}"><i class="fa-solid fa-table" aria-hidden="true"></i><span>Отчёты</span></a>
+        <a href="/guide" class="top-nav__link {% if nav == 'guide' %}is-active{% endif %}"><i class="fa-regular fa-circle-question" aria-hidden="true"></i><span>Справка</span></a>
+        {% if user and user.is_admin %}
+        <a href="/admin" class="top-nav__link {% if nav == 'admin' %}is-active{% endif %}"><i class="fa-solid fa-user-shield" aria-hidden="true"></i><span>Админ</span></a>
+        {% endif %}
+      </nav>
+      <div class="top-actions">
+        {% include "partials/theme_switch.html" %}
+        <a href="/profile" class="user-chip {% if nav == 'profile' %}is-active{% endif %}"><i class="fa-regular fa-user" aria-hidden="true"></i><span>Профиль</span></a>
+        <a href="/settings" class="icon-btn {% if nav == 'settings' %}is-active{% endif %}" title="Настройки"><i class="fa-solid fa-gear" aria-hidden="true"></i></a>
+        <a href="/logout" class="icon-btn" title="Выйти"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></a>
+      </div>
+    </header>
+    <main id="main" class="main-area">
+      <div id="page-root" class="page-shell">
+        {% for f in flash %}
+        <p class="flash flash--{{ f.cat }}">{{ f.msg }}</p>
+        {% endfor %}
+        {% block content %}{% endblock %}
+        {% include "partials/site_footer.html" %}
+      </div>
+    </main>
+  </div>
+  {% else %}
+  <div class="auth-theme-bar">{% include "partials/theme_switch.html" %}</div>
+  <main id="main" class="auth-wrap">
+    <div id="page-root" class="page-shell page-shell--narrow">
+      {% for f in flash %}
+      <p class="flash flash--{{ f.cat }}">{{ f.msg }}</p>
+      {% endfor %}
+      {% block auth_content %}{% endblock %}
+      {% include "partials/site_footer.html" %}
+    </div>
+  </main>
+  {% endif %}
+  <script src="/static/js/app.js" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

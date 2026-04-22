@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Проект{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="h1"><i class="fa-solid fa-pen" aria-hidden="true"></i> {{ p.name }}</h1>
+  <p class="lede muted"><a href="/projects" class="muted"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> К списку</a></p>
+</div>
+<form method="post" action="/projects/{{ p.id }}/edit" class="card form-grid form-grid--2">
+  <label class="field"><span class="field__label"><i class="fa-solid fa-heading" aria-hidden="true"></i> Название</span><input class="input" name="name" value="{{ p.name }}" required></label>
+  <label class="field"><span class="field__label"><i class="fa-solid fa-building" aria-hidden="true"></i> Клиент</span><input class="input" name="client_name" value="{{ p.client_name }}"></label>
+  <label class="field field--full"><span class="field__label"><i class="fa-solid fa-align-left" aria-hidden="true"></i> Описание</span><textarea class="input input--area" name="description" rows="3">{{ p.description }}</textarea></label>
+  <label class="field"><span class="field__label"><i class="fa-solid fa-coins" aria-hidden="true"></i> Тип оплаты</span>
+    <select class="input" name="payment_type">
+      <option value="{{ PaymentType.hourly.value }}" {% if p.payment_type == PaymentType.hourly.value %}selected{% endif %}>Почасовая</option>
+      <option value="{{ PaymentType.fixed.value }}" {% if p.payment_type == PaymentType.fixed.value %}selected{% endif %}>Фикс</option>
+    </select>
+  </label>
+  <label class="field"><span class="field__label"><i class="fa-solid fa-tag" aria-hidden="true"></i> Ставка / час</span><input class="input" name="hourly_rate" value="{{ p.hourly_rate or '' }}"></label>
+  <label class="field"><span class="field__label"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i> Фикс. сумма</span><input class="input" name="fixed_amount" value="{{ p.fixed_amount or '' }}"></label>
+  <div class="field field--full actions-row">
+    <button type="submit" class="btn btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i> Сохранить</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Задачи{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="h1"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Задачи</h1>
+  <p class="lede muted">Фильтры и приоритеты.</p>
+</div>
+
+<form method="get" action="/tasks" class="card filters-bar">
+  <div class="filters-bar__row">
+    <label class="field field--compact">
+      <span class="field__label"><i class="fa-solid fa-folder" aria-hidden="true"></i> Проект</span>
+      <select name="project_id" class="input" onchange="this.form.submit()">
+        <option value="">Все</option>
+        {% for pr in projects %}
+        <option value="{{ pr.id }}" {% if filter_project == pr.id %}selected{% endif %}>{{ pr.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="field field--compact">
+      <span class="field__label"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i> Статус</span>
+      <select name="status" class="input" onchange="this.form.submit()">
+        <option value="">Все</option>
+        <option value="{{ TaskStatus.open.value }}" {% if filter_status == TaskStatus.open.value %}selected{% endif %}>Открыта</option>
+        <option value="{{ TaskStatus.in_progress.value }}" {% if filter_status == TaskStatus.in_progress.value %}selected{% endif %}>В работе</option>
+        <option value="{{ TaskStatus.done.value }}" {% if filter_status == TaskStatus.done.value %}selected{% endif %}>Готово</option>
+      </select>
+    </label>
+    <label class="field field--compact">
+      <span class="field__label"><i class="fa-solid fa-flag" aria-hidden="true"></i> Приоритет</span>
+      <select name="priority" class="input" onchange="this.form.submit()">
+        <option value="">Все</option>
+        <option value="{{ TaskPriority.low.value }}" {% if filter_priority == TaskPriority.low.value %}selected{% endif %}>Низкий</option>
+        <option value="{{ TaskPriority.medium.value }}" {% if filter_priority == TaskPriority.medium.value %}selected{% endif %}>Средний</option>
+        <option value="{{ TaskPriority.high.value }}" {% if filter_priority == TaskPriority.high.value %}selected{% endif %}>Высокий</option>
+      </select>
+    </label>
+  </div>
+</form>
+
+<details class="card card--openable">
+  <summary class="card__summary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Новая задача</summary>
+  <form method="post" action="/tasks/new" class="form-grid form-grid--2">
+    <label class="field"><span class="field__label"><i class="fa-solid fa-folder" aria-hidden="true"></i> Проект</span>
+      <select class="input" name="project_id" required>
+        {% for pr in projects %}
+        <option value="{{ pr.id }}">{{ pr.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="field"><span class="field__label"><i class="fa-solid fa-heading" aria-hidden="true"></i> Название</span><input class="input" name="title" required></label>
+    <label class="field"><span class="field__label"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i> Статус</span>
+      <select class="input" name="status">
+        <option value="{{ TaskStatus.open.value }}">Открыта</option>
+        <option value="{{ TaskStatus.in_progress.value }}">В работе</option>
+        <option value="{{ TaskStatus.done.value }}">Готово</option>
+      </select>
+    </label>
+    <label class="field"><span class="field__label"><i class="fa-solid fa-flag" aria-hidden="true"></i> Приоритет</span>
+      <select class="input" name="priority">
+        <option value="{{ TaskPriority.low.value }}">Низкий</option>
+        <option value="{{ TaskPriority.medium.value }}" selected>Средний</option>
+        <option value="{{ TaskPriority.high.value }}">Высокий</option>
+      </select>
+    </label>
+    <label class="field"><span class="field__label"><i class="fa-regular fa-calendar" aria-hidden="true"></i> Дедлайн</span><input class="input" type="date" name="deadline"></label>
+    <label class="field"><span class="field__label"><i class="fa-regular fa-hourglass-half" aria-hidden="true"></i> Оценка, ч</span><input class="input" name="estimated_hours" inputmode="decimal"></label>
+    <label class="field field--full"><span class="field__label"><i class="fa-solid fa-tags" aria-hidden="true"></i> Теги через запятую</span><input class="input" name="tags" placeholder="дизайн, вёрстка"></label>
+    <div class="field field--full actions-row"><button type="submit" class="btn btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i> Создать</button></div>
+  </form>
+</details>
+
+{% for t in tasks %}
+<article class="card task-card">
+  <header class="task-card__head">
+    <h2 class="h3">{{ t.title }}</h2>
+    <span class="pill pill--{{ t.status }}">{{ t.status }}</span>
+    <span class="badge badge--{{ t.priority }}"><i class="fa-solid fa-flag" aria-hidden="true"></i> {{ t.priority }}</span>
+  </header>
+  <p class="muted small"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> {{ t.project.name }}</p>
+  {% if t.deadline %}
+  <p class="task-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ format_date_user(t.deadline, user.date_format) }}</p>
+  {% endif %}
+  {% if t.tags %}
+  <p class="tag-row">
+    {% for tg in t.tags %}
+    <span class="tag"><i class="fa-solid fa-tag" aria-hidden="true"></i> {{ tg.name }}</span>
+    {% endfor %}
+  </p>
+  {% endif %}
+  {% if t.subtasks %}
+  <ul class="subtask-list">
+    {% for st in t.subtasks %}
+    <li>
+      <form method="post" action="/subtasks/{{ st.id }}/toggle" class="inline-form">
+        <button type="submit" class="chk-btn" aria-pressed="{{ 'true' if st.done else 'false' }}">
+          {% if st.done %}<i class="fa-solid fa-square-check" aria-hidden="true"></i>{% else %}<i class="fa-regular fa-square" aria-hidden="true"></i>{% endif %}
+        </button>
+      </form>
+      {{ st.title }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="/tasks/{{ t.id }}/subtask" class="form-inline subtask-add">
+    <input type="text" name="title" class="input input--sm" placeholder="Подзадача" required>
+    <button type="submit" class="btn btn--ghost btn--sm"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+  </form>
+  <details class="task-edit">
+    <summary><i class="fa-solid fa-pen" aria-hidden="true"></i> Редактировать</summary>
+    <form method="post" action="/tasks/{{ t.id }}/edit" class="form-grid form-grid--2">
+      <label class="field field--full"><span class="field__label">Название</span><input class="input" name="title" value="{{ t.title }}" required></label>
+      <label class="field"><span class="field__label">Статус</span>
+        <select class="input" name="status">
+          <option value="{{ TaskStatus.open.value }}" {% if t.status == TaskStatus.open.value %}selected{% endif %}>Открыта</option>
+          <option value="{{ TaskStatus.in_progress.value }}" {% if t.status == TaskStatus.in_progress.value %}selected{% endif %}>В работе</option>
+          <option value="{{ TaskStatus.done.value }}" {% if t.status == TaskStatus.done.value %}selected{% endif %}>Готово</option>
+        </select>
+      </label>
+      <label class="field"><span class="field__label">Приоритет</span>
+        <select class="input" name="priority">
+          <option value="{{ TaskPriority.low.value }}" {% if t.priority == TaskPriority.low.value %}selected{% endif %}>Низкий</option>
+          <option value="{{ TaskPriority.medium.value }}" {% if t.priority == TaskPriority.medium.value %}selected{% endif %}>Средний</option>
+          <option value="{{ TaskPriority.high.value }}" {% if t.priority == TaskPriority.high.value %}selected{% endif %}>Высокий</option>
+        </select>
+      </label>
+      <label class="field"><span class="field__label">Дедлайн</span><input class="input" type="date" name="deadline" value="{{ t.deadline.isoformat() if t.deadline else '' }}"></label>
+      <label class="field"><span class="field__label">Оценка, ч</span><input class="input" name="estimated_hours" value="{{ t.estimated_hours or '' }}"></label>
+      <label class="field field--full"><span class="field__label">Теги</span><input class="input" name="tags" value="{{ t.tags | map(attribute='name') | join(', ') }}"></label>
+      <div class="field field--full actions-row">
+        <button type="submit" class="btn btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i> Сохранить</button>
+      </div>
+    </form>
+  </details>
+  <form method="post" action="/tasks/{{ t.id }}/delete" onsubmit="return confirm('Удалить задачу?');" class="task-delete-form">
+    <button type="submit" class="btn btn--danger btn--sm"><i class="fa-solid fa-trash" aria-hidden="true"></i> Удалить задачу</button>
+  </form>
+</article>
+{% else %}
+<p class="muted card">Нет задач по фильтру.</p>
+{% endfor %}
+{% endblock %}

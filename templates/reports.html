@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Отчёты{% endblock %}
+{% block content %}
+<div class="reports-page">
+<div class="page-head">
+  <h1 class="h1"><i class="fa-solid fa-table" aria-hidden="true"></i> Отчёты</h1>
+  <p class="lede muted">Фильтры и сводка за период.</p>
+</div>
+
+<form method="get" action="/reports" class="card form-grid form-grid--2">
+  <label class="field"><span class="field__label"><i class="fa-regular fa-calendar" aria-hidden="true"></i> С</span>
+    <input type="date" name="from" class="input" value="{{ date_from.isoformat() }}">
+  </label>
+  <label class="field"><span class="field__label"><i class="fa-regular fa-calendar" aria-hidden="true"></i> По</span>
+    <input type="date" name="to" class="input" value="{{ date_to.isoformat() }}">
+  </label>
+  <div class="field field--full">
+    <span class="field__label"><i class="fa-solid fa-folder" aria-hidden="true"></i> Проекты</span>
+    <div class="chk-group">
+      {% for pr in projects %}
+      <label class="chk"><input type="checkbox" name="project_ids" value="{{ pr.id }}" {% if pr.id in project_ids %}checked{% endif %}> {{ pr.name }}</label>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="field field--full">
+    <span class="field__label"><i class="fa-solid fa-tags" aria-hidden="true"></i> Теги</span>
+    <div class="chk-group">
+      {% for tg in tags %}
+      <label class="chk"><input type="checkbox" name="tag_ids" value="{{ tg.id }}" {% if tg.id in tag_ids %}checked{% endif %}> {{ tg.name }}</label>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="field field--full actions-row">
+    <button type="submit" class="btn btn--primary"><i class="fa-solid fa-filter" aria-hidden="true"></i> Показать</button>
+    <a href="/reports/export.csv?from={{ date_from.isoformat() }}&to={{ date_to.isoformat() }}" class="btn btn--ghost"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> CSV</a>
+  </div>
+</form>
+
+<section class="card">
+  <h2 class="h2"><i class="fa-solid fa-coins" aria-hidden="true"></i> Итого</h2>
+  <p class="report-total">{{ format_money(total, user.currency) }}</p>
+</section>
+
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Проект</th>
+        <th>Задача</th>
+        <th>Часы</th>
+        <th>Сумма</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.project }}</td>
+        <td>{{ r.task }}</td>
+        <td>{% if r.hours is not none %}{{ '%.2f'|format(r.hours) }}{% else %}—{% endif %}</td>
+        <td>{% if r.payment_type == PaymentType.fixed.value %}<i class="fa-solid fa-sack-dollar" aria-hidden="true"></i>{% endif %} {{ format_money(r.amount, user.currency) }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="muted">Нет строк за выбранный период.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<section class="card">
+  <h2 class="h2"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> По дням недели</h2>
+  <div class="bar-chart" role="img" aria-label="Сумма по дням недели">
+    {% set labels = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'] %}
+    {% for i in range(7) %}
+    <div class="bar-chart__col">
+      <div class="bar-chart__bar" style="height: {% if weekday_bar_max > 0 %}{{ ((by_weekday.get(i, 0) / weekday_bar_max) * 100)|round(1) }}{% else %}0{% endif %}%"></div>
+      <span class="bar-chart__label">{{ labels[i] }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2 class="h2"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> План / факт (часы)</h2>
+  <div class="table-wrap">
+    <table class="data-table data-table--compact">
+      <thead><tr><th>Проект</th><th>Задача</th><th>План</th><th>Факт</th></tr></thead>
+      <tbody>
+        {% for pf in plan_fact %}
+        <tr>
+          <td>{{ pf.project }}</td>
+          <td>{{ pf.task }}</td>
+          <td>{{ '%.1f'|format(pf.planned) }}</td>
+          <td>{{ '%.1f'|format(pf.actual_hours) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="muted">Нет оценок у задач.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+</div>
+{% endblock %}

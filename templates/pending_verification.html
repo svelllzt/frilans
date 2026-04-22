@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Подтверждение почты{% endblock %}
+{% block pending_content %}
+<div class="card card--center">
+  <h1 class="h1"><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i> Почти готово</h1>
+  <p class="lede">На <strong>{{ user.email }}</strong> ушло письмо с <strong>шестизначным кодом</strong>. Введите его ниже (проверьте спам, если долго ждёте).</p>
+
+  <form method="post" action="/verify-email" class="form-grid auth-form" style="margin-top:1rem;">
+    <label class="field">
+      <span class="field__label">Код из письма</span>
+      <input type="text" name="code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"
+             class="input" placeholder="000000" autofocus>
+    </label>
+    <button type="submit" class="btn btn--primary auth-main-btn"><i class="fa-solid fa-check" aria-hidden="true"></i><span>Подтвердить</span></button>
+  </form>
+
+  <form method="post" action="/resend-verification-code" style="margin-top:0.75rem;">
+    <button type="submit" class="btn btn--ghost btn--sm"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Отправить код снова</button>
+  </form>
+
+  {% if dev_email_code %}
+  <p class="muted small" style="margin-top:1rem;">Отладка: код сейчас <strong>{{ dev_email_code }}</strong></p>
+  {% endif %}
+
+  <p style="margin-top:1.25rem;"><a href="/logout" class="btn btn--ghost"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> Выйти</a></p>
+</div>
+{% endblock %}

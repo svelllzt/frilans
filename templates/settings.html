@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Настройки{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="h1"><i class="fa-solid fa-gear" aria-hidden="true"></i> Настройки</h1>
+  <p class="lede muted">Валюта, даты, тема и безопасность.</p>
+</div>
+
+<form method="post" action="/settings/profile" class="card form-grid form-grid--2">
+  <h2 class="h2 field--full"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Интерфейс</h2>
+  <label class="field">
+    <span class="field__label"><i class="fa-solid fa-coins" aria-hidden="true"></i> Валюта</span>
+    <input class="input" value="RUB (₽)" readonly>
+  </label>
+  <label class="field">
+    <span class="field__label"><i class="fa-regular fa-calendar" aria-hidden="true"></i> Формат даты</span>
+    <select name="date_format" class="input">
+      <option value="DD.MM.YYYY" {% if user.date_format == 'DD.MM.YYYY' %}selected{% endif %}>ДД.ММ.ГГГГ</option>
+      <option value="MM/DD/YYYY" {% if user.date_format == 'MM/DD/YYYY' %}selected{% endif %}>ММ/ДД/ГГГГ</option>
+    </select>
+  </label>
+  <label class="field field--full">
+    <span class="field__label"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i> Тема</span>
+    <select name="theme" class="input" id="settings-theme">
+      <option value="{{ ThemePreference.light.value }}" {% if user.theme == ThemePreference.light.value %}selected{% endif %}>Светлая</option>
+      <option value="{{ ThemePreference.dark.value }}" {% if user.theme == ThemePreference.dark.value %}selected{% endif %}>Тёмная</option>
+      <option value="{{ ThemePreference.system.value }}" {% if user.theme == ThemePreference.system.value %}selected{% endif %}>Как в системе</option>
+    </select>
+  </label>
+  <div class="field field--full actions-row">
+    <button type="submit" class="btn btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i> Сохранить</button>
+  </div>
+</form>
+
+<form method="post" action="/settings/password" class="card form-grid form-grid--2">
+  <h2 class="h2 field--full"><i class="fa-solid fa-lock" aria-hidden="true"></i> Смена пароля</h2>
+  <label class="field"><span class="field__label">Текущий пароль</span><input type="password" name="current_password" class="input" required autocomplete="current-password"></label>
+  <label class="field"><span class="field__label">Новый пароль</span><input type="password" name="new_password" class="input" required minlength="8" autocomplete="new-password"></label>
+  <div class="field field--full actions-row">
+    <button type="submit" class="btn btn--primary"><i class="fa-solid fa-key" aria-hidden="true"></i> Обновить пароль</button>
+  </div>
+</form>
+
+<form method="post" action="/settings/delete-account" class="card card--danger-zone" onsubmit="return confirm('Удалить аккаунт и все данные?');">
+  <h2 class="h2"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Удаление аккаунта</h2>
+  <p class="muted small danger-zone__hint">Введите DELETE для подтверждения.</p>
+  <label class="field field--full danger-zone__field"><input type="text" name="confirm" class="input" placeholder="DELETE" autocomplete="off"></label>
+  <div class="danger-zone__actions">
+    <button type="submit" class="btn btn--danger"><i class="fa-solid fa-trash" aria-hidden="true"></i> Удалить навсегда</button>
+  </div>
+</form>
+{% endblock %}

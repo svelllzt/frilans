@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Вход{% endblock %}
+{% block auth_content %}
+<section class="card card--center auth-card">
+  <p class="auth-brand"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Frilans</p>
+  <h1 class="h1 h1--auth">С возвращением</h1>
+  <p class="muted auth-subtitle">Войдите в аккаунт, чтобы продолжить работу с проектами и учётом времени.</p>
+  <form method="post" action="/login" class="form-grid auth-form">
+    <label class="field">
+      <span class="field__label"><i class="fa-regular fa-envelope" aria-hidden="true"></i> Email</span>
+      <input type="email" name="email" required autocomplete="email" class="input">
+    </label>
+    <label class="field">
+      <span class="field__label"><i class="fa-solid fa-key" aria-hidden="true"></i> Пароль</span>
+      <input type="password" name="password" required autocomplete="current-password" class="input">
+    </label>
+    <button type="submit" class="btn btn--primary auth-main-btn"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span>Войти</span></button>
+  </form>
+  <p class="auth-links">
+    <a href="/register"><i class="fa-regular fa-id-badge" aria-hidden="true"></i> Регистрация</a>
+    <a href="/forgot-password"><i class="fa-solid fa-unlock-keyhole" aria-hidden="true"></i> Забыли пароль</a>
+  </p>
+</section>
+{% endblock %}

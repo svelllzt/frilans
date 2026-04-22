@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="h1">Добрый день</h1>
+  <p class="lede muted">Кратко о доходах и текущей работе.</p>
+</div>
+
+<section class="grid-stats" aria-label="Доходы">
+  <article class="stat-card">
+    <div class="stat-card__icon"><i class="fa-solid fa-sun" aria-hidden="true"></i></div>
+    <div class="stat-card__body">
+      <p class="stat-card__label">Сегодня</p>
+      <p class="stat-card__value">{{ format_money(stats.today, user.currency) }}</p>
+    </div>
+  </article>
+  <article class="stat-card">
+    <div class="stat-card__icon"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i></div>
+    <div class="stat-card__body">
+      <p class="stat-card__label">Неделя</p>
+      <p class="stat-card__value">{{ format_money(stats.week, user.currency) }}</p>
+    </div>
+  </article>
+  <article class="stat-card">
+    <div class="stat-card__icon"><i class="fa-regular fa-calendar" aria-hidden="true"></i></div>
+    <div class="stat-card__body">
+      <p class="stat-card__label">Месяц</p>
+      <p class="stat-card__value">{{ format_money(stats.month, user.currency) }}</p>
+    </div>
+  </article>
+</section>
+
+<div class="two-col">
+  <section class="card" aria-labelledby="timer-h">
+    <h2 id="timer-h" class="h2"><i class="fa-solid fa-stopwatch" aria-hidden="true"></i> Таймер</h2>
+    <p class="muted small timer-hint"><i class="fa-regular fa-circle-question" aria-hidden="true"></i> Выберите <strong>незавершённую</strong> задачу из <strong>активного</strong> проекта, затем «Старт». Остановить — «Стоп»; в доходе для <strong>почасовых</strong> проектов сумма считается как минуты ÷ 60 × ставка проекта (фикс — в отчёте после закрытия проекта).</p>
+    {% if timer and timer_task %}
+    <div class="timer-active">
+      <p class="timer-active__task"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> {{ timer_task.project.name }}</p>
+      <p class="timer-active__title">{{ timer_task.title }}</p>
+      <p class="timer-display" id="timer-display" data-started="{{ timer.started_at.isoformat() }}Z">0:00</p>
+      <form method="post" action="/api/timer/stop" id="timer-stop-form" class="timer-stop-wrap">
+        <button type="submit" class="btn btn--accent"><i class="fa-solid fa-stop" aria-hidden="true"></i> Стоп</button>
+      </form>
+    </div>
+    {% else %}
+    <p id="timer-error" class="timer-error" role="alert" hidden></p>
+    {% if quick_tasks %}
+    <form method="post" action="/api/timer/start" id="timer-start-form" class="timer-form">
+      <label class="field timer-form__field">
+        <span class="field__label"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Задача</span>
+        <select name="task_id" id="timer-task-select" class="input" required>
+          {% if quick_tasks|length > 1 %}
+          <option value="" disabled selected>— выберите задачу —</option>
+          {% endif %}
+          {% for t in quick_tasks %}
+          <option value="{{ t.id }}" {% if quick_tasks|length == 1 %}selected{% endif %}>{{ t.project.name }} — {{ t.title }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="timer-form__btn">
+        <button type="submit" class="btn btn--primary"><i class="fa-solid fa-play" aria-hidden="true"></i> Старт</button>
+      </div>
+    </form>
+    {% else %}
+    <p class="muted small"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i> Нет подходящих задач: нужен <strong>активный</strong> проект и задача не в статусе «готово». <a href="/projects">Проекты</a> · <a href="/tasks">Задачи</a></p>
+    {% endif %}
+    {% endif %}
+  </section>
+
+  <section class="card" aria-labelledby="tasks-h">
+    <h2 id="tasks-h" class="h2"><i class="fa-solid fa-list-ul" aria-hidden="true"></i> В работе</h2>
+    {% if open_tasks %}
+    <ul class="task-mini-list">
+      {% for t in open_tasks %}
+      <li>
+        <span class="badge badge--{{ t.priority }}"><i class="fa-solid fa-flag" aria-hidden="true"></i> {{ t.priority }}</span>
+        <a href="/tasks">{{ t.title }}</a>
+        <span class="muted small">{{ t.project.name }}</span>
+        {% if t.deadline %}
+        <span class="task-deadline"><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ format_date_user(t.deadline, user.date_format) }}</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted"><i class="fa-regular fa-circle-check" aria-hidden="true"></i> Нет открытых задач или всё сделано.</p>
+    {% endif %}
+    <p class="card__footer"><a href="/tasks" class="link-more"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Все задачи</a></p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  (function() {
+    function showTimerErr(el, text) {
+      if (!el) return;
+      el.textContent = text;
+      el.hidden = false;
+    }
+    function formatApiErr(j, status) {
+      if (!j) return 'Ошибка ' + status;
+      if (j.message) return j.message;
+      var d = j.detail;
+      if (typeof d === 'string') return d;
+      if (Array.isArray(d)) return d.map(function(x) { return x.msg || String(x); }).join(', ');
+      return 'Ошибка ' + status;
+    }
+    var formStop = document.getElementById('timer-stop-form');
+    if (formStop) {
+      formStop.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var fd = new FormData();
+        fetch('/api/timer/stop', { method: 'POST', body: fd, credentials: 'same-origin' })
+          .then(function(r) { return r.json().then(function(j) { return { r: r, j: j }; }); })
+          .then(function(x) {
+            if (x.r.ok) window.location.reload();
+            else alert(formatApiErr(x.j, x.r.status));
+          });
+      });
+    }
+    var formStart = document.getElementById('timer-start-form');
+    var errEl = document.getElementById('timer-error');
+    if (formStart) {
+      formStart.addEventListener('submit', function(e) {
+        e.preventDefault();
+        errEl.hidden = true;
+        var fd = new FormData(formStart);
+        fetch('/api/timer/start', { method: 'POST', body: fd, credentials: 'same-origin' })
+          .then(function(r) { return r.json().then(function(j) { return { r: r, j: j }; }); })
+          .then(function(x) {
+            if (x.r.ok && x.j.ok) {
+              window.location.reload();
+              return;
+            }
+            showTimerErr(errEl, formatApiErr(x.j, x.r.status));
+          })
+          .catch(function() {
+            showTimerErr(errEl, 'Не удалось связаться с сервером.');
+          });
+      });
+    }
+    var el = document.getElementById('timer-display');
+    if (el && el.dataset.started) {
+      var start = Date.parse(el.dataset.started);
+      function tick() {
+        var sec = Math.floor((Date.now() - start) / 1000);
+        var m = Math.floor(sec / 60);
+        var s = sec % 60;
+        el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+      }
+      tick();
+      setInterval(tick, 1000);
+    }
+  })();
+</script>
+{% endblock %}

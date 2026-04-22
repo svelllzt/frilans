@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Админ{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="h1"><i class="fa-solid fa-user-shield" aria-hidden="true"></i> Админ-панель</h1>
+  <p class="lede muted">Статистика, пользователи, сайт, техработы и SMTP.</p>
+</div>
+
+<section class="grid-stats" aria-label="Статистика системы">
+  <article class="stat-card"><div class="stat-card__icon"><i class="fa-solid fa-users" aria-hidden="true"></i></div><div class="stat-card__body"><p class="stat-card__label">Пользователи</p><p class="stat-card__value">{{ users|length }}</p></div></article>
+  <article class="stat-card"><div class="stat-card__icon"><i class="fa-solid fa-folder-tree" aria-hidden="true"></i></div><div class="stat-card__body"><p class="stat-card__label">Проекты</p><p class="stat-card__value">{{ projects_count }}</p></div></article>
+  <article class="stat-card"><div class="stat-card__icon"><i class="fa-solid fa-list-check" aria-hidden="true"></i></div><div class="stat-card__body"><p class="stat-card__label">Задачи</p><p class="stat-card__value">{{ tasks_count }}</p></div></article>
+  <article class="stat-card"><div class="stat-card__icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></div><div class="stat-card__body"><p class="stat-card__label">Записи времени</p><p class="stat-card__value">{{ time_entries_count }}</p></div></article>
+  <article class="stat-card"><div class="stat-card__icon"><i class="fa-solid fa-stopwatch" aria-hidden="true"></i></div><div class="stat-card__body"><p class="stat-card__label">Активные таймеры</p><p class="stat-card__value">{{ active_timers_count }}</p></div></article>
+</section>
+
+<section class="card">
+  <h2 class="h2"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Сайт и режимы</h2>
+  <form method="post" action="/admin/config" class="form-grid form-grid--2">
+    <label class="field field--full"><span class="field__label">Базовый URL (домен или IP)</span>
+      <input class="input" name="base_url" value="{{ settings.BASE_URL }}" placeholder="https://example.com">
+      <small class="muted">Для ссылок в письмах, если нет заголовка Host (за reverse proxy обычно подставляется автоматически).</small>
+    </label>
+    <label class="field"><span class="field__label">Режимы</span>
+      <div class="chk-group">
+        <label class="chk"><input type="checkbox" name="debug" value="true" {% if settings.DEBUG %}checked{% endif %}> Debug</label>
+        <label class="chk"><input type="checkbox" name="maintenance" value="true" {% if settings.MAINTENANCE %}checked{% endif %}> Техработы</label>
+      </div>
+      <small class="muted">При техработах доступны только вход, админка и статика.</small>
+    </label>
+    <div class="field field--full" style="margin:0;"><hr style="border:0;border-top:1px solid var(--border, #ded8cc);"></div>
+    <h3 class="h3 field field--full"><i class="fa-solid fa-envelope" aria-hidden="true"></i> SMTP</h3>
+    <label class="field"><span class="field__label">Host</span><input class="input" name="host" value="{{ settings.SMTP_HOST }}"></label>
+    <label class="field"><span class="field__label">Port</span><input class="input" name="port" type="number" value="{{ settings.SMTP_PORT }}" min="1"></label>
+    <label class="field"><span class="field__label">Username</span><input class="input" name="username" value="{{ settings.SMTP_USERNAME }}"></label>
+    <label class="field"><span class="field__label">From Email</span><input class="input" name="from_email" value="{{ settings.SMTP_FROM_EMAIL }}"></label>
+    <label class="field field--full"><span class="field__label">Password</span><input class="input" name="password" type="password" value="{{ settings.SMTP_PASSWORD }}"></label>
+    <label class="field"><span class="field__label">Timeout (sec)</span><input class="input" type="number" name="timeout_seconds" value="{{ settings.SMTP_TIMEOUT_SECONDS }}" min="5"></label>
+    <label class="field"><span class="field__label">Шифрование</span>
+      <div class="chk-group">
+        <label class="chk"><input type="checkbox" name="use_tls" value="true" {% if settings.SMTP_USE_TLS %}checked{% endif %}> TLS</label>
+        <label class="chk"><input type="checkbox" name="use_ssl" value="true" {% if settings.SMTP_USE_SSL %}checked{% endif %}> SSL</label>
+      </div>
+    </label>
+    <div class="field field--full actions-row">
+      <button type="submit" class="btn btn--primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Сохранить всё и применить</span></button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2 class="h2"><i class="fa-solid fa-user-lock" aria-hidden="true"></i> Пользователи</h2>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Email</th><th>Роль</th><th>Статус</th><th>Проекты</th><th>Задачи</th><th></th></tr></thead>
+      <tbody>
+      {% for row in users %}
+        <tr>
+          <td>{{ row.user.email }}</td>
+          <td>{% if row.user.is_admin %}<span class="pill pill--active">admin</span>{% else %}<span class="pill">user</span>{% endif %}</td>
+          <td>{% if row.user.is_blocked %}<span class="pill pill--archived">blocked</span>{% else %}<span class="pill pill--active">active</span>{% endif %}</td>
+          <td>{{ row.projects }}</td>
+          <td>{{ row.tasks }}</td>
+          <td>
+            {% if not row.user.is_admin and row.user.id != user.id %}
+            <form method="post" action="/admin/user/{{ row.user.id }}/toggle-block">
+              <button type="submit" class="btn btn--sm {% if row.user.is_blocked %}btn--ghost{% else %}btn--danger{% endif %}">{% if row.user.is_blocked %}Разблокировать{% else %}Заблокировать{% endif %}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
